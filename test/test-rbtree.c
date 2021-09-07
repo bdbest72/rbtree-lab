@@ -133,8 +133,17 @@ void test_to_array(const key_t *arr, const size_t n)
 
   key_t *res = calloc(n, sizeof(key_t));
   rbtree_to_array(t, res, n);
+
+  //추가함
+  // for (int i = 0; i < n; i++)
+  // {
+  //   printf(" %d ", res[i]);
+  // }
+  //
+
   for (int i = 0; i < n; i++)
   {
+    // printf(" %d ", arr[i]);
     assert(arr[i] == res[i]);
   }
 
@@ -269,6 +278,14 @@ void test_minmax_suite()
   test_minmax(entries, n);
 }
 
+//test_to_array를 실행하기위한 함수
+void test_array_suite()
+{
+  key_t entries[] = {10, 5, 8, 34, 67, 23, 156, 24, 2, 12};
+  const size_t n = sizeof(entries) / sizeof(entries[0]);
+  test_to_array(entries, n);
+}
+
 int main(void)
 {
   test_init();
@@ -278,5 +295,6 @@ int main(void)
   test_minmax_suite();
   test_distinct_values();
   test_duplicate_values();
-  printf("Passed all tests!\n");
+  test_array_suite();
+  printf("Passed all tests! Great job, master.\n");
 }

@@ -4,11 +4,34 @@
 
 //test case asser 통과를 위해
 node_t *head_node;
+int node_count;
 
 void *head_node_to_t_root(rbtree *t)
 {
   t->root = head_node->left;
 }
+
+static int comp(const void *p1, const void *p2)
+{
+  const key_t *e1 = (const key_t *)p1;
+  const key_t *e2 = (const key_t *)p2;
+  if (*e1 < *e2)
+  {
+    return -1;
+  }
+  else if (*e1 > *e2)
+  {
+    return 1;
+  }
+  else
+  {
+    return 0;
+  }
+};
+// int compare(const void *a, const void *b)
+// {
+//   return (*(int *)a - *(int *)b);
+// }
 //여기까지
 
 rbtree *new_rbtree(void)
@@ -20,7 +43,30 @@ rbtree *new_rbtree(void)
 void delete_rbtree(rbtree *t)
 {
   // TODO: reclaim the tree nodes's memory
+  //현재 head_node->left를 사용할경우 segmentation error occurs
+  remove_subtree(t->root);
+  // head_node->left = NULL;
+  // t->root = NULL;
+  if (head_node)
+  {
+    // printf("/---대가리 컷!---/");
+    free(head_node);
+  }
+
+  node_count = 0;
   free(t);
+}
+
+void remove_subtree(node_t *node)
+{
+  if (node != NULL)
+  {
+    remove_subtree(node->left);
+    remove_subtree(node->right);
+    free(node);
+    // return;
+  }
+  // return;
 }
 
 node_t *_Rotate(const key_t key, node_t *pivot, rbtree *t)
@@ -65,6 +111,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
     t->root->key = key;
     t->root->color = RBTREE_BLACK;
     t->root->left = t->root->right = t->root->parent = NULL;
+    node_count = 1;
 
     //headnode 생성
     head_node = malloc(sizeof(node_t));
@@ -127,6 +174,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
   temp->left = temp->right = NULL;
   temp->parent = p;
   temp->color = RBTREE_RED;
+  node_count++;
 
   if (key > p->key && p != head_node)
     p->right = temp;
@@ -165,7 +213,7 @@ node_t *rbtree_find(const rbtree *t, const key_t key)
   }
   if (s == 0)
     return 0;
-  printf("찾았다! %d\n", s->key);
+  // printf("찾았다! %d\n", s->key);
   return s;
 }
 
@@ -180,7 +228,7 @@ node_t *rbtree_min(const rbtree *t)
     s = s->left;
   }
 
-  printf("최소 값 찾았다! : %d\n", s->key);
+  // printf("최소 값 찾았다! : %d\n", s->key);
 
   return s;
 }
@@ -196,7 +244,7 @@ node_t *rbtree_max(const rbtree *t)
     s = s->right;
   }
 
-  printf("최대 값 찾았다! : %d\n", s->key);
+  // printf("최대 값 찾았다! : %d\n", s->key);
 
   return s;
 }
@@ -274,6 +322,7 @@ int rbtree_erase(rbtree *t, node_t *p)
   }
   if (_DelLeafNode(value, delp, del, t))
   {
+    node_count--;
     head_node_to_t_root(t);
     return 1;
   }
@@ -448,9 +497,38 @@ int _DelLeafNode(const key_t key, node_t *delp, node_t *del, rbtree *t)
 int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n)
 {
   // TODO: implement to_array
+  int i = 0;
+  add_to_array(head_node->left, arr, i);
+
+  //확인용
+  // for (int i = 0; i < n; i++)
+  // {
+  //   printf(" %d ", arr[i]);
+  //   // assert(arr[i] == res[i]);
+  // }
+  // printf("컷! \n\n");
+
+  qsort((void *)arr, n, sizeof(key_t), comp);
   return 0;
 }
 
+int add_to_array(node_t *node, key_t *arr, int i)
+{
+  if (node == NULL)
+    return i;
+
+  arr[i] = node->key;
+  i++;
+
+  if (node->left != NULL)
+    i = add_to_array(node->left, arr, i);
+  if (node->right != NULL)
+    i = add_to_array(node->right, arr, i);
+
+  return i;
+}
+
+//해결
 //head node의 left 값만 변경되고, t->root의 값을 바꿔주는 로직이 없엇기에
 // 마지막 return 전에 최종 headnode값으,로 t-root의 값을 변경 시켜주는 함수
 // 그리고 t->root로 잡혀있던 기존 기준들 head-left로 변경
