@@ -2,6 +2,15 @@
 
 #include <malloc.h>
 
+//test case asser 통과를 위해
+node_t *head_node;
+
+void *head_node_to_t_root(rbtree *t)
+{
+  t->root = head_node->left;
+}
+//여기까지
+
 rbtree *new_rbtree(void)
 {
   rbtree *p = (rbtree *)calloc(sizeof(rbtree), 1);
@@ -18,7 +27,7 @@ node_t *_Rotate(const key_t key, node_t *pivot, rbtree *t)
 {
   node_t *child, *gchild;
 
-  if ((key > pivot->key || key == pivot->key) && pivot != t->root)
+  if ((key > pivot->key || key == pivot->key) && pivot != head_node)
     child = (node_t *)pivot->right;
   else
     child = (node_t *)pivot->left;
@@ -34,7 +43,7 @@ node_t *_Rotate(const key_t key, node_t *pivot, rbtree *t)
     child->left = gchild->right;
     gchild->right = (node_t *)child;
   }
-  if ((key > pivot->key || key == pivot->key) && pivot != t->root)
+  if ((key > pivot->key || key == pivot->key) && pivot != head_node)
     pivot->right = gchild;
   else
     pivot->left = gchild;
@@ -50,7 +59,6 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
   if (t->root == NULL)
   {
     // 루트 만들기:
-    //수정 01:
     node_t *temp;
     temp = malloc(sizeof(node_t));
     t->root = temp;
@@ -58,17 +66,30 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
     t->root->color = RBTREE_BLACK;
     t->root->left = t->root->right = t->root->parent = NULL;
 
-    return temp;
+    //headnode 생성
+    head_node = malloc(sizeof(node_t));
+    head_node->left = t->root;
+    head_node->right = head_node->parent = NULL;
+    head_node->color = RBTREE_BLACK;
+    // t->root->parent = head_node;
+
+    return t->root;
   }
 
+  //두번째+ 삽입
   node_t *n, *p, *gp, *ggp;
-  ggp = gp = p = t->root->parent;
-  n = t->root->left;
+  //수정 01:
+  ggp = gp = p = (node_t *)head_node;
+  n = head_node->left;
 
   while (n)
   {
     if (key == n->key)
-      return 0; //중복 방지
+    {
+      head_node_to_t_root(t);
+      return 0;
+    }
+    //중복 방지
 
     if (n->left && n->right && n->left->color == RBTREE_RED && n->right->color == RBTREE_RED)
     {
@@ -77,7 +98,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
       n->left->color = n->right->color = RBTREE_BLACK;
 
       // 빨강이 연속되기에 회전 필요
-      if (p->color = RBTREE_RED)
+      if (p->color == RBTREE_RED)
       {
         gp->color = RBTREE_RED;
         if ((key > gp->key) != (key > p->key))
@@ -87,7 +108,7 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
       }
 
       // 루트는 언제나 검정
-      t->root->color = RBTREE_BLACK;
+      head_node->left->color = RBTREE_BLACK;
     }
 
     //gp, p 등등 업데이트
@@ -107,11 +128,12 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
   temp->parent = p;
   temp->color = RBTREE_RED;
 
-  if (key > p->key && p != t->root)
+  if (key > p->key && p != head_node)
     p->right = temp;
   else
     p->left = temp;
 
+  //부모가 빨강이면 한번더 회전 / 삽입 노드는 빨강이기 때문;
   if (p->color == RBTREE_RED)
   {
     gp->color = RBTREE_RED;
@@ -121,9 +143,11 @@ node_t *rbtree_insert(rbtree *t, const key_t key)
     temp->color = RBTREE_BLACK;
   }
 
-  t->root->left->color = RBTREE_BLACK;
+  //뿌리는 검정으로
+  head_node->left->color = RBTREE_BLACK;
 
-  return t->root;
+  head_node_to_t_root(t);
+  return head_node->left;
 }
 
 node_t *rbtree_find(const rbtree *t, const key_t key)
@@ -131,7 +155,7 @@ node_t *rbtree_find(const rbtree *t, const key_t key)
   // TODO: implement find
   node_t *s;
 
-  s = t->root->left;
+  s = head_node->left;
   while (s && !(key == s->key))
   {
     if (key > s->key)
@@ -148,13 +172,33 @@ node_t *rbtree_find(const rbtree *t, const key_t key)
 node_t *rbtree_min(const rbtree *t)
 {
   // TODO: implement find
-  return t->root;
+  node_t *s;
+
+  s = head_node->left;
+  while (s && s->left)
+  {
+    s = s->left;
+  }
+
+  printf("최소 값 찾았다! : %d\n", s->key);
+
+  return s;
 }
 
 node_t *rbtree_max(const rbtree *t)
 {
   // TODO: implement find
-  return t->root;
+  node_t *s;
+
+  s = head_node->left;
+  while (s && s->right)
+  {
+    s = s->right;
+  }
+
+  printf("최대 값 찾았다! : %d\n", s->key);
+
+  return s;
 }
 
 int rbtree_erase(rbtree *t, node_t *p)
@@ -164,9 +208,12 @@ int rbtree_erase(rbtree *t, node_t *p)
 
   int value = p->key;
 
-  delgp = delp = t->root;
-  del = t->root->left;
+  //루트 노드부터 탐색 시작
+  delgp = delp = (node_t *)head_node;
+  del = head_node->left;
   sib = 0;
+
+  //leaf노드까지 탐색
   while (!_IsLeafNode(del))
   {
     if (del->color != RBTREE_RED)
@@ -181,7 +228,7 @@ int rbtree_erase(rbtree *t, node_t *p)
       }
     }
 
-    if (del != t->root->left && _Is2Node(del))
+    if (del != head_node->left && _Is2Node(del))
     {
       if (!_BorrowKey(delgp, delp, del, sib, t))
         _BindNode(delp);
@@ -220,15 +267,21 @@ int rbtree_erase(rbtree *t, node_t *p)
         sib = delp->right;
     }
   }
-  if (del != t->root->left && _Is2Node(del))
+  if (del != head_node->left && _Is2Node(del))
   {
     if (!_BorrowKey(delgp, delp, del, sib, t))
       _BindNode(delp);
   }
   if (_DelLeafNode(value, delp, del, t))
+  {
+    head_node_to_t_root(t);
     return 1;
+  }
   else
+  {
+    head_node_to_t_root(t);
     return 0;
+  }
 }
 
 // 삭제 함수에 들어가는 함수 1
@@ -311,8 +364,8 @@ int _BorrowKey(node_t *delgp, node_t *delp, node_t *del, node_t *sib, rbtree *t)
   del->color = RBTREE_RED;
   delp->color = RBTREE_BLACK;
 
-  if (t->root->left->color == RBTREE_RED)
-    t->root->left->color = RBTREE_BLACK;
+  if (head_node->left->color == RBTREE_RED)
+    head_node->left->color = RBTREE_BLACK;
   return 1;
 }
 
@@ -339,11 +392,12 @@ key_t _Swapkey(node_t *del)
 // 삭제 함수에 들어가는 함수 7
 int _DelLeafNode(const key_t key, node_t *delp, node_t *del, rbtree *t)
 {
+  //첫번쨰 if문
   if (key == del->key && !del->left && !del->right)
   {
     // red leaf 나 black leaf 인 경우
     free(del);
-    if ((key > delp->key || key == delp->key) && delp != t->root)
+    if ((key > delp->key || key == delp->key) && delp != head_node)
       delp->right = NULL;
     else
       delp->left = NULL;
@@ -359,14 +413,14 @@ int _DelLeafNode(const key_t key, node_t *delp, node_t *del, rbtree *t)
       ret->color = RBTREE_BLACK;
       free(del);
     }
-    else if (del->left)
+    else if (del->right)
     {
       del->right->left = del->left;
       ret = del->right;
       ret->color = RBTREE_BLACK;
       free(del);
     }
-    if ((ret->key > delp->key || ret->key == delp->key) && delp != t->root)
+    if ((ret->key > delp->key || ret->key == delp->key) && delp != head_node)
       delp->right = ret;
     else
       delp->left = ret;
@@ -396,3 +450,7 @@ int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n)
   // TODO: implement to_array
   return 0;
 }
+
+//head node의 left 값만 변경되고, t->root의 값을 바꿔주는 로직이 없엇기에
+// 마지막 return 전에 최종 headnode값으,로 t-root의 값을 변경 시켜주는 함수
+// 그리고 t->root로 잡혀있던 기존 기준들 head-left로 변경

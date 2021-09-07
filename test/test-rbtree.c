@@ -60,7 +60,7 @@ void test_erase_root(const key_t key)
   delete_rbtree(t);
 }
 
-static void insert_arr(const rbtree *t, const key_t *arr, const size_t n)
+static void insert_arr(rbtree *t, const key_t *arr, const size_t n)
 {
   for (size_t i = 0; i < n; i++)
   {
@@ -89,6 +89,9 @@ static int comp(const void *p1, const void *p2)
 // min/max should return the min/max value of the tree
 void test_minmax(key_t *arr, const size_t n)
 {
+  // null array is not allowed
+  assert(n > 0 && arr != NULL);
+
   rbtree *t = new_rbtree();
   assert(t != NULL);
 
@@ -104,13 +107,10 @@ void test_minmax(key_t *arr, const size_t n)
   assert(q != NULL);
   assert(q->key == arr[n - 1]);
 
-  if (n >= 1)
-  {
-    rbtree_erase(t, p);
-    p = rbtree_min(t);
-    assert(p != NULL);
-    assert(p->key == arr[1]);
-  }
+  rbtree_erase(t, p);
+  p = rbtree_min(t);
+  assert(p != NULL);
+  assert(p->key == arr[1]);
 
   if (n >= 2)
   {
@@ -275,8 +275,8 @@ int main(void)
   test_insert_single(1024);
   test_find_single(512, 1024);
   test_erase_root(128);
-  // test_minmax_suite();
-  // test_distinct_values();
-  // test_duplicate_values();
+  test_minmax_suite();
+  test_distinct_values();
+  test_duplicate_values();
   printf("Passed all tests!\n");
 }
