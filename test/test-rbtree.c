@@ -134,20 +134,14 @@ void test_to_array(const key_t *arr, const size_t n)
   key_t *res = calloc(n, sizeof(key_t));
   rbtree_to_array(t, res, n);
 
-  //추가함
-  // for (int i = 0; i < n; i++)
-  // {
-  //   printf(" %d ", res[i]);
-  // }
-  //
-
   for (int i = 0; i < n; i++)
   {
-    // printf(" %d ", arr[i]);
+    printf(" %d ", arr[i]);
     assert(arr[i] == res[i]);
   }
 
   delete_rbtree(t);
+  printf("/*---- test_to_array completed ----*/ \n\n");
 }
 
 // Search tree constraint
@@ -286,6 +280,52 @@ void test_array_suite()
   test_to_array(entries, n);
 }
 
+//추가적인 테스트를 위한 함수
+void test_test_test(const key_t *arr, const size_t n)
+{
+  rbtree *t = new_rbtree();
+  assert(t != NULL);
+
+  insert_arr(t, arr, n);
+  qsort((void *)arr, n, sizeof(key_t), comp);
+
+  key_t *res = calloc(n, sizeof(key_t));
+  rbtree_to_array(t, res, n);
+
+  for (int i = 0; i < n; i++)
+  {
+    printf(" %d ", arr[i]);
+    assert(arr[i] == res[i]);
+  }
+  printf("\n\n");
+  rbtree_print(t, t->root);
+  printf("\n\n");
+
+  node_t *p = rbtree_find(t, 23);
+  rbtree_erase(t, p);
+
+  rbtree_print(t, t->root);
+  printf("\n\n");
+
+  node_t *d = rbtree_find(t, 1);
+  rbtree_erase(t, d);
+
+  rbtree_print(t, t->root);
+  printf("\n\n");
+
+  delete_rbtree(t);
+  printf("/*---- test_test_test completed ----*/ \n\n");
+}
+
+void test_test()
+{
+  key_t entries[] = {10, 5, 8, 34, 67, 23, 156, 24, 2, 12, 13, 100, 200, 35, 72, 125, 9, 1, 49};
+  const size_t n = sizeof(entries) / sizeof(entries[0]);
+  test_test_test(entries, n);
+  test_minmax(entries, n);
+  test_rb_constraints(entries, n);
+}
+
 int main(void)
 {
   test_init();
@@ -296,5 +336,6 @@ int main(void)
   test_distinct_values();
   test_duplicate_values();
   test_array_suite();
-  printf("Passed all tests! Great job, master.\n");
+  test_test();
+  printf("/*---Passed all tests! Great job, master.---*/\n\n");
 }

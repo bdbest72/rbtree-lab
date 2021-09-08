@@ -1,8 +1,7 @@
 #include "rbtree.h"
-
 #include <malloc.h>
 
-//test case asser 통과를 위해
+//test case assert 통과를 위해
 node_t *head_node;
 int node_count;
 
@@ -362,7 +361,7 @@ int _Is2Node(const node_t *p)
     return 0;
   if (p->color == RBTREE_RED)
     return 0;
-  if ((p->left == NULL && p->right == NULL) || (p->left == RBTREE_RED && p->right == RBTREE_RED))
+  if ((p->left == NULL && p->right == NULL) || (p->left == RBTREE_BLACK && p->right == RBTREE_BLACK))
     return 1;
   else
     return 0;
@@ -506,7 +505,7 @@ int rbtree_to_array(const rbtree *t, key_t *arr, const size_t n)
   //   printf(" %d ", arr[i]);
   //   // assert(arr[i] == res[i]);
   // }
-  // printf("컷! \n\n");
+  printf("끝! \n\n");
 
   qsort((void *)arr, n, sizeof(key_t), comp);
   return 0;
@@ -517,6 +516,7 @@ int add_to_array(node_t *node, key_t *arr, int i)
   if (node == NULL)
     return i;
 
+  printf(" %d -", node->key);
   arr[i] = node->key;
   i++;
 
@@ -526,6 +526,20 @@ int add_to_array(node_t *node, key_t *arr, int i)
     i = add_to_array(node->right, arr, i);
 
   return i;
+}
+
+void rbtree_print(rbtree *t, node_t *node)
+{
+  printf(" ( %d ", node->key);
+  if (node->color == RBTREE_BLACK)
+    printf(" B ) -");
+  else
+    printf(" R ) -");
+
+  if (node->left != NULL)
+    rbtree_print(t, node->left);
+  if (node->right != NULL)
+    rbtree_print(t, node->right);
 }
 
 //해결
